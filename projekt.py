@@ -1,4 +1,4 @@
 def main():
-    print("Tere Merlin!")
+    print("Tere Tamm!")
 
 main()
