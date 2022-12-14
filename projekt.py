@@ -1,35 +1,41 @@
 import requests
 from bs4 import BeautifulSoup
-
+from easygui import *
 #Beta versiooniks on plaanis luua programm, mis võtab kõik funktsioonid kasutusse ja luua sellele EasyGUI-ga graafiline liide.
 #Samuti arendame me funktsioone, et nad tagastaksid täpsemat infot ja seda paremal kujul.
+tiitel = "REISI ÄPP"
+def main():
+    while True:
+        riik = enterbox("Sisestage riik kuhu soovite reisida:", tiitel)
+        linn = enterbox("Sisestage linn kuhu soovite reisida:", tiitel)
+        lahkumine = enterbox("Sisestage reisi alguskuupäev (YYYY-MM-DD)", tiitel)
+        saabumine = enterbox("Sisestage reisi lõppkuupäev (YYYY-MM-DD)", tiitel)
+        hind = parim_pilet(lahkumine.lower(), saabumine.lower(), riik, linn)
+        if not hind:
+            msgbox("Paistab, et olete sisendväljad valesti täitnud!", tiitel)
+            continue
+        else:
+            msg = "Parim edasi-tagasi lennupilet sisestatud kuupäeval sihtkohta "+ riik + ", "+ linn + " maksab "+ hind
+            valikud = ["Ööbimine", "Proovi uuesti"]
+            vastus = buttonbox(msg, choices=valikud)
 
-def aita_koodi_tagastja(linn):
-    #Linna nime sisestades tagastab 3-tähelise AITA koodi, mida on vaja järgmise funkt. jaoks
-    try:
-        lehe_nimi = "https://www.iata.org/en/publications/directories/code-search/?airport.search=" + linn
-        res = requests.get(lehe_nimi)
-        res.raise_for_status()
-        iata_soup = BeautifulSoup(res.text, "html.parser")
-        koodid = iata_soup.select(".datatable")
-        scrape_list = str(koodid).split("\n")
-        aita_kood = scrape_list[12].replace("<td>", "")
-        aita_kood = aita_kood.replace("</td>", "")
-        return aita_kood
-    except:
-        return False
-    
-def parim_pilet(sihtkoha_kood, algus_kuupäev, lõpp_kuupäev):
+        if vastus == "Proovi uuesti":
+            continue
+        
+        #Merlini osa
+
+def parim_pilet(lahkumis_kuupäev, saabumis_kuupäev, sihtkoha_riik, sihtkoha_linn):
     #Tagastab lennupiletite ostmise lingi
+    #Kuupäeva vorm: YYYY-MM-DD
     try:
-        lähtekoha_kood = "TLL"
-        #kuupäeva sisendid on juba YYYY-MM-DD vormis
-        aadress = "https://www.momondo.ee/flight-search/"+lähtekoha_kood+"-"+sihtkoha_kood+"/"+algus_kuupäev+"/"+lõpp_kuupäev
-        res = requests.get(aadress)
+        url = "https://www.kiwi.com/ee/search/results/tallinn-estonia/"+sihtkoha_riik+"-"+sihtkoha_linn+"/"+lahkumis_kuupäev+"/"+saabumis_kuupäev
+        res = requests.get(url)
         res.raise_for_status()
         pilet_soup = BeautifulSoup(res.text, "html.parser")
-        hinnad = pilet_soup.find_all(href=compile("book"))
-        return hinnad
+        hinnad = pilet_soup.find_all("span", "length-5")
+        parim_hind = str(hinnad[0]).replace('<span class="length-5">', "")
+        parim_hind = parim_hind.replace("</span>", "")
+        return parim_hind
     except:
         return False
 
@@ -49,3 +55,5 @@ def parim_ööbimiskoht(riigi_kood_2tahte_väikesed, linna_nimi):
             print("<----->")
         except:
             return False
+
+main()
