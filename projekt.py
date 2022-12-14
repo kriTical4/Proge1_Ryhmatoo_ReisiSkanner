@@ -21,14 +21,23 @@ def main():
 
         if vastus == "Proovi uuesti":
             continue
-        
-        #Merlini osa
+        riigikood = str(enterbox("Sisestage 2-täheline riigikood:", tiitel))
+        ööbimiskoht = parim_ööbimiskoht(riigikood.lower(), linn.lower())
+        if not ööbimiskoht:
+            msgbox("Paistab, et olete sisendväljad valesti täitnud!", tiitel)
+        else:
+            msg = "Parim ööbimiskoht linnas" + linn + "on: \n" + ööbimiskoht[0] + ööbimiskoht[1] + ööbimiskoht[2] 
+            valikud=["Lennupilet", "Proovi uuesti"]
+            vastus = buttonbox(msg, choices=valikud)
+            
+        if vastus == "Proovi uuesti":
+            continue
 
 def parim_pilet(lahkumis_kuupäev, saabumis_kuupäev, sihtkoha_riik, sihtkoha_linn):
     #Tagastab lennupiletite ostmise lingi
     #Kuupäeva vorm: YYYY-MM-DD
     try:
-        url = "https://www.kiwi.com/ee/search/results/tallinn-estonia/"+sihtkoha_riik+"-"+sihtkoha_linn+"/"+lahkumis_kuupäev+"/"+saabumis_kuupäev
+        url = "https://www.kiwi.com/ee/search/results/tallinn-estonia/"+sihtkoha_linn+"-"+sihtkoha_riik+"/"+lahkumis_kuupäev+"/"+saabumis_kuupäev
         res = requests.get(url)
         res.raise_for_status()
         pilet_soup = BeautifulSoup(res.text, "html.parser")
@@ -45,15 +54,21 @@ def parim_ööbimiskoht(riigi_kood_2tahte_väikesed, linna_nimi):
     response=requests.get(url)
     soup=BeautifulSoup(response.text, "html.parser")
 #soup.select() sees on bloki class kus kõik hotelli informatsioon kirjas on
-    for element in soup.select(".sr_card.js-sr-card"):
-        try:
+    hotellid = []
+    try:
+        for element in soup.select(".sr_card.js-sr-card"):
         #hotelli nime "class"
-            print(element.select(".bui-card_title")[0].get_text().strip())
+            hotelli_nimi = element.select(".bui-card_title")[0].get_text().strip()
         #hotelli hinna "class"
-            print(element.select(".bui-price-display_value.bui-f-color_constructive")[0].get_text().strip())
-        #eraldab hotellide nimed
-            print("<----->")
-        except:
-            return False
+            hotelli_hind = element.select(".bui-price-display_value.bui-f-color_constructive")[0].get_text().strip()
+
+            hotelli_info = str(hotelli_nimi)+" - "+str(hotelli_hind) + "\n"
+            hotellid.append(hotelli_info)
+        
+        return hotellid
+    except:
+        return False
+        
+        
 
 main()
